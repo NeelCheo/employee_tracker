@@ -16,9 +16,9 @@ app.use(express.json());
 const dbConnection = async () => {
   const db = await mysql.createConnection({
     host: "localhost",
-    // ADD YOUR USERNAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // V ADD YOUR USERNAME TO USER V    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     user: "root",
-    // ADD YOUR PASSOWRD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // V ADD YOUR PASSOWRD V             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     password: "",
     multipleStatements: true,
   });
