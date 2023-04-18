@@ -19,7 +19,7 @@ const dbConnection = async () => {
     // ADD YOUR USERNAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     user: "root",
     // ADD YOUR PASSOWRD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    password: "Sd0ck3rsMySQL",
+    password: "",
     multipleStatements: true,
   });
   console.log(`Connected to MySQL Server.`);
@@ -35,12 +35,14 @@ const dbConnection = async () => {
   console.log(`connected to company_db.`);
   await db.query(seedFile);
   console.log("executed the SQL files.");
+
+  return db;
 };
 
 //initalizes the the app
 const init = async () => {
-  await dbConnection();
-  await mainMenu();
+  const db = await dbConnection();
+  await mainMenu(db);
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
