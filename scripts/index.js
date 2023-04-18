@@ -5,7 +5,7 @@ const promptUser = async (questions) => {
   return answer;
 };
 
-const mainMenu = async () => {
+const mainMenu = async (db) => {
   const answer = await promptUser([
     {
       type: "list",
@@ -25,39 +25,52 @@ const mainMenu = async () => {
   ])
   switch (answer.choice) {
     case "View all departments":
-      // MySQL code to view all departments
-      await mainMenu();
+      const [departments] = await db.query("SELECT * FROM department");
+      console.table(departments);
+      await mainMenu(db);
       break;
     case "View all roles":
-      // MySQL code to view all roles
-      await mainMenu();
+      const [roles] = await db.query(
+        `SELECT role.id, role.title, role.salary, department.name as department
+        FROM role
+        LEFT JOIN department ON role.department_id = department.id;`
+      );
+      console.table(roles);
+      await mainMenu(db);
       break;
     case "View all employees":
-      // MySQL code to view all employees
-      await mainMenu();
+      const [employees] = await db.query(
+        `SELECT employee.id, employee.first_name, employee.last_name, role.title as role, 
+        CONCAT(manager.first_name, ' ', manager.last_name) as manager
+        FROM employee
+        JOIN role ON employee.role_id = role.id
+        JOIN employee manager ON employee.manager_id = manager.id;`
+      );
+      console.table(employees);
+      await mainMenu(db);
       break;
     case "Add a department":
-      await addDepartment();
-      await mainMenu();
+      await addDepartment(db);
+      await mainMenu(db);
       break;
     case "Add a role":
-      await addRole();
-      await mainMenu();
+      await addRole(db);
+      await mainMenu(db);
       break;
     case "Add an employee":
-      await addEmployee();
-      await mainMenu();
+      await addEmployee(db);
+      await mainMenu(db);
       break;
     case "Update an employee role":
-      await updateEmployeeRole();
-      await mainMenu();
+      await updateEmployeeRole(db);
+      await mainMenu(db);
       break;
     case "Exit":
       process.exit();
   }
 };
 
-const addDepartment = async () => {
+const addDepartment = async (db) => {
   const answer = await promptUser([
     {
       type: "input",
@@ -65,11 +78,11 @@ const addDepartment = async () => {
       message: "Enter the name of the department:",
     },
   ]);
-
-  // MySQL code to add a department
+  await db.query("INSERT INTO department (name) VALUES (?)", [answer.departmentName]);
 };
 
-const addRole = async () => {
+const addRole = async (db) => {
+  const [departments] = await db.query("SELECT * FROM department");
   const answer = await promptUser([
     {
       type: "input",
@@ -82,16 +95,25 @@ const addRole = async () => {
       message: "Enter the salary for the role:",
     },
     {
-      type: "input",
-      name: "departmentId",
-      message: "Enter the department ID for the role:",
+      type: "list",
+      name: "departmentName",
+      message: "Select the department for the role:",
+      choices: departments.map(department => department.name),
     },
   ]);
 
-  // MySQL code to add a role
+  const department = departments.find(department => department.name === answer.departmentName);
+
+  await db.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)", [
+    answer.roleName,
+    answer.salary,
+    department.id,
+  ]);
 };
 
-const addEmployee = async () => {
+const addEmployee = async (db) => {
+  const [roles] = await db.query("SELECT * FROM role");
+  const [managers] = await db.query("SELECT * FROM employee WHERE manager_id IS NULL");
   const answer = await promptUser([
     {
       type: "input",
@@ -104,39 +126,57 @@ const addEmployee = async () => {
       message: "Enter the last name of the employee:",
     },
     {
-      type: "input",
+      type: "list",
       name: "roleId",
-      message: "Enter the role ID for the employee:",
+      message: "Select the role for the employee:",
+      choices: roles.map(role => ({ name: role.title, value: role.id })),
     },
     {
-      type: "input",
+      type: "list",
       name: "managerId",
-      message: "Enter the manager ID for the employee (leave blank if no manager):",
+      message: "Select the manager for the employee:",
+      choices: [
+        { name: "No manager", value: null },
+        ...managers.map(manager => ({ name: `${manager.first_name} ${manager.last_name}`, value: manager.id })),
+      ],
     },
   ]);
-
-  // MySQL code to add an employee
+  await db.query(
+    "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
+    [
+      answer.firstName,
+      answer.lastName,
+      answer.roleId,
+      answer.managerId || null,
+    ]
+  );
 };
 
-const updateEmployeeRole = async () => {
+const updateEmployeeRole = async (db) => {
+  const [employees] = await db.query("SELECT * FROM employee");
+  const [roles] = await db.query("SELECT * FROM role");
   const answer = await promptUser([
     {
-      type: "input",
+      type: "list",
       name: "employeeId",
-      message: "Enter the employee ID to update:",
+      message: "Select the employee to update:",
+      choices: employees.map(employee => ({ name: `${employee.first_name} ${employee.last_name}`, value: employee.id })),
     },
     {
-      type: "input",
+      type: "list",
       name: "newRoleId",
-      message: "Enter the new role ID for the employee:",
+      message: "Select the new role for the employee:",
+      choices: roles.map(role => ({ name: role.title, value: role.id })),
     },
   ]);
-
-  // MySQL code to update an employee role
+  await db.query("UPDATE employee SET role_id = ? WHERE id = ?", [
+    answer.newRoleId,
+    answer.employeeId,
+  ]);
 };
 
 // Start the application if needed for testing
-// mainMenu();
+// mainMenu(db);
 
 
 module.exports = mainMenu;
