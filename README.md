@@ -31,4 +31,5 @@ email: neel.chakravartty@uconn.edu
 
 Repository: https://github.com/NeelCheo/employee_tracker
 
-here is a link to a video example of the application:
+here is a link to a video example of the application: https://watch.screencastify.com/v/fZr0XZhARlbOxGFrHUZ9
+
