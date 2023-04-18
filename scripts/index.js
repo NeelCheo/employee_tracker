@@ -175,8 +175,4 @@ const updateEmployeeRole = async (db) => {
   ]);
 };
 
-// Start the application if needed for testing
-// mainMenu(db);
-
-
 module.exports = mainMenu;
